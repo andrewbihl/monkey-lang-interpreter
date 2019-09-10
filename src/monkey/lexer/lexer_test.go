@@ -1,13 +1,39 @@
 package lexer
 
 import (
+	"fmt"
 	"testing"
 
 	"monkey/token"
 )
 
 func TestNextToken(t *testing.T) {
-	input := `let five = 5;
+
+	type output struct {
+		tokenType token.TokenType
+		literal   string
+	}
+
+	runTest := func(t *testing.T, sourceCode string, expectedOutputs []output) {
+		l := New(sourceCode)
+
+		for i, expected := range expectedOutputs {
+			fmt.Println("> " + string(expected.tokenType))
+			tok := l.NextToken()
+
+			if tok.Type != expected.tokenType {
+				t.Fatalf("tests[%d] - wrong tokentype. expected=%q, got=%q",
+					i, expected.tokenType, tok.Type)
+			}
+
+			if tok.Literal != expected.literal {
+				t.Fatalf("tests[%d] - wrong literal. expected=%q, got=%q",
+					i, expected.literal, tok.Literal)
+			}
+		}
+	}
+
+	input1 := `let five = 5;
 let ten = 10;
    let add = fn(x, y) {
      x + y;
@@ -15,10 +41,7 @@ let ten = 10;
    let result = add(five, ten);
    `
 
-	tests := []struct {
-		expectedType    token.TokenType
-		expectedLiteral string
-	}{
+	tests1 := []output{
 		{token.LET, "let"},
 		{token.IDENT, "five"},
 		{token.ASSIGN, "="},
@@ -58,19 +81,34 @@ let ten = 10;
 		{token.EOF, ""},
 	}
 
-	l := New(input)
+	t.Run("lexer test", func(t *testing.T) {
+		runTest(t, input1, tests1)
+	})
 
-	for i, test := range tests {
-		tok := l.NextToken()
-
-		if tok.Type != test.expectedType {
-			t.Fatalf("tests[%d] - wrong tokentype. expected=%q, got=%q",
-				i, test.expectedType, tok.Type)
-		}
-
-		if tok.Literal != test.expectedLiteral {
-			t.Fatalf("tests[%d] - wrong literal. expected=%q, got=%q",
-				i, test.expectedLiteral, tok.Literal)
-		}
+	input2 := `!-/*5;
+   5 < 10 > 5567;
+   `
+	tests2 := []output{
+		{token.BANG, "!"},
+		{token.MINUS, "-"},
+		{token.SLASH, "/"},
+		{token.STAR, "*"},
+		{token.INT, "5"},
+		{token.SEMICOLON, ";"},
+		{token.INT, "5"},
+		{token.LT, "<"},
+		{token.INT, "10"},
+		{token.GT, ">"},
+		{token.INT, "5567"},
+		{token.SEMICOLON, ";"},
 	}
+
+	t.Run("lexer test extended", func(t *testing.T) {
+		runTest(t, input2, tests2)
+	})
+
+	t.Run("lexer test extended", func(t *testing.T) {
+
+	})
+
 }
